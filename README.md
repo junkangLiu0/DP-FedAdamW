@@ -1,7 +1,7 @@
 # DP-FedAdamW
+# DP-FedAdamW: An Efficient Optimizer for Differentially Private Federated Large Model
 
-# Federated Learning Framework README
-
+恭喜《DP-FedAdamW: An Efficient Optimizer for Differentially Private Federated Large Model》被 CVPR 接收！该工作聚焦差分隐私联邦大模型训练中的优化器效率问题，将 DP、FedAdamW 与大模型联邦优化结合起来，选题前沿且具有很强的实际意义。
 This repository contains two main federated learning scripts: `main_FedAdamW.py` (for CNN-based models) and `new_llm.py` (for transformer-based models). Below is a comprehensive guide for running experiments and understanding all parameters.
 
 * 有代码问题+vx15653218567 马上回复！帮忙引用论文一下就行！
@@ -313,5 +313,348 @@ python new_llm.py \
 
 **🎉 祝实验顺利！有任何问题欢迎提Issue交流~**
 
+# DP-FedAdamW
+
+<div align="center">
+
+# DP-FedAdamW: An Efficient Optimizer for Differentially Private Federated Large Models
+
+**CVPR | Differential Privacy · Federated Learning · Large Model Optimization**
+
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](#installation)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](#installation)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](#license)
+[![Paper](https://img.shields.io/badge/Paper-CVPR-red.svg)](#citation)
+
+</div>
+
+---
+
+## Overview
+
+This repository provides the official implementation of **DP-FedAdamW**, an efficient optimizer designed for **differentially private federated training of large models**.
+
+The codebase supports both:
+
+- **CNN / vision backbones** through `main_FedAdamW.py`
+- **Transformer / language-model backbones** through `new_llm.py`
+
+It is designed for reproducible federated learning experiments under non-IID data distributions, differential privacy constraints, and memory-efficient large-model fine-tuning settings such as LoRA.
+
+---
+
+## Highlights
+
+- **Efficient DP federated optimization**  
+  Implements DP-FedAdamW for privacy-preserving federated large-model training.
+
+- **CNN and Transformer support**  
+  Supports ResNet, Swin, DeiT, and RoBERTa-style backbones.
+
+- **LoRA-based efficient fine-tuning**  
+  Enables parameter-efficient training for transformer-based federated learning.
+
+- **Non-IID federated benchmarks**  
+  Supports Dirichlet-based client partitioning for controlled heterogeneity.
+
+- **Single-GPU friendly experiments**  
+  Provides practical configurations for running federated experiments on limited GPU resources.
+
+---
+
+## Repository Structure
+
+```text
+DP-FedAdamW/
+├── main_FedAdamW.py      # Federated training for CNN / vision models
+├── new_llm.py            # Federated training for Transformer / LoRA models
+├── requirements.txt      # Python dependencies
+├── log/                  # Training logs
+├── checkpoint/           # Saved checkpoints
+├── plot/                 # Accuracy / loss curves
+├── model/                # Final model weights
+└── README.md
+```
+
+---
+
+## Installation
+
+We recommend using a clean conda environment.
+
+```bash
+conda create -n dp-fedadamw python=3.8 -y
+conda activate dp-fedadamw
+```
+
+Install PyTorch according to your CUDA version. For example:
+
+```bash
+pip install torch torchvision torchaudio
+```
+
+Then install the remaining dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+If you prefer manual installation:
+
+```bash
+pip install numpy matplotlib tensorboardX filelock tqdm scikit-learn scipy
+pip install ray==1.0.0
+pip install transformers datasets peft
+```
+
+---
+
+## Quick Start
+
+### 1. CNN Training on CIFAR-100 with ResNet-18
+
+```bash
+python main_FedAdamW.py \
+  --alg FedAdamW \
+  --lr 3e-4 \
+  --data_name CIFAR100 \
+  --alpha_value 0.1 \
+  --alpha 0.001 \
+  --epoch 301 \
+  --extname ResNet18_CIFAR100 \
+  --lr_decay 2 \
+  --gamma 0.5 \
+  --CNN resnet18 \
+  --E 5 \
+  --batch_size 50 \
+  --gpu 0 \
+  --p 1 \
+  --num_gpus_per 0.1 \
+  --normalization BN \
+  --selection 0.1 \
+  --print 0 \
+  --pre 1 \
+  --num_workers 100 \
+  --preprint 10 \
+  --rho 0.01 \
+  --pix 32 \
+  --lora 0 \
+  --K 50
+```
+
+### 2. Vision Transformer Training with DeiT-Tiny
+
+```bash
+python main_FedAdamW.py \
+  --alg FedAdamW \
+  --lr 3e-4 \
+  --data_name CIFAR100 \
+  --alpha_value 0.1 \
+  --alpha 0.001 \
+  --epoch 301 \
+  --extname DeiT_CIFAR100 \
+  --lr_decay 2 \
+  --gamma 0.5 \
+  --CNN deit_tiny \
+  --E 5 \
+  --batch_size 50 \
+  --gpu 0 \
+  --p 1 \
+  --num_gpus_per 0.1 \
+  --normalization BN \
+  --selection 0.1 \
+  --print 0 \
+  --pre 1 \
+  --num_workers 100 \
+  --preprint 10 \
+  --beta1 0.9 \
+  --beta2 0.999 \
+  --rho 0.01 \
+  --pix 32 \
+  --lora 0 \
+  --K 50
+```
+
+### 3. Transformer Training on GLUE-SST2 with RoBERTa-base and LoRA
+
+```bash
+python new_llm.py \
+  --alg FedAdamW \
+  --lr 3e-4 \
+  --data_name sst2 \
+  --alpha_value 0.8 \
+  --alpha 0.9 \
+  --epoch 101 \
+  --extname RoBERTa_SST2 \
+  --lr_decay 2 \
+  --gamma 0.9 \
+  --CNN roberta_base \
+  --E 10 \
+  --batch_size 32 \
+  --gpu 0 \
+  --p 1 \
+  --num_gpus_per 0.25 \
+  --selection 0.2 \
+  --pre 1 \
+  --num_workers 20 \
+  --preprint 5 \
+  --K 50 \
+  --freeze 1 \
+  --beta1 0.9 \
+  --beta2 0.999 \
+  --r 16 \
+  --lora 1 \
+  --print 1
+```
+
+---
+
+## Supported Tasks
+
+| Task | Dataset | Backbone | Script |
+|---|---|---|---|
+| Image classification | CIFAR-10 / CIFAR-100 | ResNet / Swin / DeiT | `main_FedAdamW.py` |
+| Text classification | SST-2 | RoBERTa-base | `new_llm.py` |
+| Natural language inference | QNLI / MNLI | RoBERTa-base | `new_llm.py` |
+| Sentence-pair matching | MRPC / QQP | RoBERTa-base | `new_llm.py` |
+
+---
+
+## Main Arguments
+
+### Federated Learning
+
+| Argument | Description | Example |
+|---|---|---|
+| `--alg` | Federated optimization algorithm | `FedAdamW` |
+| `--num_workers` | Number of total clients | `100` |
+| `--selection` | Fraction of clients selected per round | `0.1` |
+| `--E` | Local epochs per communication round | `5` |
+| `--K` | Maximum local steps per round | `50` |
+| `--alpha_value` | Dirichlet parameter for non-IID data split | `0.1` |
+
+### Optimization
+
+| Argument | Description | Example |
+|---|---|---|
+| `--lr` | Client learning rate | `3e-4` |
+| `--alpha` | Weight decay coefficient | `0.001` |
+| `--lr_decay` | Learning-rate scheduler type | `2` |
+| `--gamma` | Scheduler / algorithm-specific coefficient | `0.5` |
+| `--beta1` | AdamW momentum coefficient | `0.9` |
+| `--beta2` | AdamW second-moment coefficient | `0.999` |
+| `--rho` | Perturbation radius for SAM-style methods | `0.01` |
+
+### Model and Data
+
+| Argument | Description | Example |
+|---|---|---|
+| `--data_name` | Dataset name | `CIFAR100`, `sst2` |
+| `--CNN` | Backbone architecture | `resnet18`, `deit_tiny`, `roberta_base` |
+| `--pre` | Use pretrained weights | `1` |
+| `--normalization` | Normalization layer for CNNs | `BN` |
+| `--pix` | Image resolution | `32` |
+
+### LoRA Fine-Tuning
+
+| Argument | Description | Example |
+|---|---|---|
+| `--lora` | Enable LoRA fine-tuning | `1` |
+| `--r` | LoRA rank | `16` |
+| `--freeze` | Freeze backbone parameters | `1` |
+
+### System
+
+| Argument | Description | Example |
+|---|---|---|
+| `--gpu` | GPU device ID or IDs | `0` |
+| `--num_gpus_per` | GPU fraction allocated per client | `0.1` |
+| `--batch_size` | Local batch size | `50` |
+| `--print` | Print detailed logs | `1` |
+| `--preprint` | Evaluation interval | `10` |
+
+---
+
+## Output Files
+
+After training, the code saves logs, checkpoints, curves, and model weights to the following directories:
+
+```text
+log/          # Training logs
+checkpoint/   # Checkpoints for resuming experiments
+plot/         # Saved accuracy / loss arrays
+model/        # Final model weights
+```
+
+Typical file naming follows the pattern:
+
+```text
+log/{algorithm}-{dataset}-{lr}-{num_clients}-{batch_size}-{rounds}.txt
+checkpoint/ckpt-{algorithm}-{lr}-{experiment_name}-{alpha_value}-{timestamp}/
+plot/{algorithm}-{dataset}-{timestamp}.npy
+model/model-{algorithm}-{timestamp}.pth
+```
+
+---
+
+## Reproducibility Tips
+
+To obtain stable and comparable results:
+
+1. Use the same random seed across all experiments.
+2. Keep `--alpha_value` fixed when comparing different algorithms.
+3. Use the same client selection ratio `--selection`.
+4. Report the average over multiple independent runs when possible.
+5. For large-model experiments, enable LoRA with `--lora 1` and keep the LoRA rank fixed.
+
+---
+
+## Recommended Experimental Settings
+
+| Scenario | Recommended Setting |
+|---|---|
+| Fast debugging | `--epoch 20 --print 1 --preprint 1` |
+| Highly non-IID FL | `--alpha_value 0.1` |
+| Near-IID FL | `--alpha_value 1.0` |
+| Memory-efficient LLM fine-tuning | `--lora 1 --r 8` or `--r 16` |
+| CIFAR image experiments | `--pix 32` |
+| Partial client participation | `--selection 0.1` |
+
+---
+
+## Citation
+
+If this repository is helpful for your research, please consider citing our work:
+
+```bibtex
+@inproceedings{dp_fedadamw,
+  title     = {DP-FedAdamW: An Efficient Optimizer for Differentially Private Federated Large Models},
+  author    = {Author Name and Collaborators},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  year      = {2026}
+}
+```
+
+Please update the author list, venue year, and BibTeX metadata according to the official camera-ready version.
+
+---
+
+## Contact
+
+For questions, please open an issue in this repository.
+
+Project page: <https://junkangliu0.github.io/>
+
+---
+
+## Acknowledgements
+
+This project builds upon open-source tools from the PyTorch, Hugging Face Transformers, PEFT, Ray, and TensorBoardX communities.
+
+---
+
+## License
+
+This repository is released for academic research purposes. Please refer to the license file for details.
 
 
